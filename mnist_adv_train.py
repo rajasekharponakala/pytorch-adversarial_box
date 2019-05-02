@@ -26,8 +26,8 @@ from adversarialbox.utils import to_var, pred_batch, test
 
 # Hyper-parameters
 param = {
-    'batch_size': 128,
-    'test_batch_size': 100,
+    'batch_size': 96,
+    'test_batch_size': 16,
     'num_epochs': 5,
     'delay': 10,
     'learning_rate': 1e-3,
