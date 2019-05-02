@@ -28,7 +28,7 @@ from adversarialbox.utils import to_var, pred_batch, test
 param = {
     'batch_size': 128,
     'test_batch_size': 100,
-    'num_epochs': 15,
+    'num_epochs': 5,
     'delay': 10,
     'learning_rate': 1e-3,
     'weight_decay': 5e-4,
