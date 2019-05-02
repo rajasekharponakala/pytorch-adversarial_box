@@ -49,7 +49,7 @@ net = models.googlenet(aux_logits=False, num_classes=5)
 #    print('CUDA ensabled.')
 #    net.cuda()
 print("CUDA Available: ",torch.cuda.is_available())
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 net.to(device)
 net.train()
