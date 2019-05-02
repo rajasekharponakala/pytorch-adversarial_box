@@ -1,19 +1,27 @@
 """
-Adversarially train LeNet-5
+Adversarially train GoogLeNet
 """
 
 import torch
 import torch.nn as nn
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
+#import torchvision.datasets as datasets
+#import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.nn.functional as F
+
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms, models
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import os
 
 from adversarialbox.attacks import FGSMAttack, LinfPGDAttack
 from adversarialbox.train import adv_train, FGSM_train_rnd
 from adversarialbox.utils import to_var, pred_batch, test
 
-from models import LeNet5
+#from models import LeNet5
 
 
 # Hyper-parameters
@@ -27,29 +35,28 @@ param = {
 }
 
 
-# Data loaders
-train_dataset = datasets.MNIST(root='../data/',train=True, download=True, 
-    transform=transforms.ToTensor())
-loader_train = torch.utils.data.DataLoader(train_dataset, 
-    batch_size=param['batch_size'], shuffle=True)
-
-test_dataset = datasets.MNIST(root='../data/', train=False, download=True, 
-    transform=transforms.ToTensor())
-loader_test = torch.utils.data.DataLoader(test_dataset, 
-    batch_size=param['test_batch_size'], shuffle=True)
+# Data loadersvtype_train = datasets.ImageFolder(os.path.join("/usr/home/st119220/torchex1/data/train"), transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(),  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]))
+vtype_train = datasets.ImageFolder(os.path.join("/usr/home/st119220/torchex1/data/train"), transforms.Compose([transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip(), transforms.ToTensor(),  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]))
+vtype_test = datasets.ImageFolder(os.path.join("/usr/home/st119220/torchex1/data/val"), transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]))
+loader_train = DataLoader(vtype_train, batch_size = param['batch_size'], shuffle=True)
+loader_test = DataLoader(vtype_test, batch_size = param['test_batch_size'], shuffle=True)
 
 
 # Setup the model
-net = LeNet5()
+net = models.googlenet(aux_logits=False, num_classes=5)
 
-if torch.cuda.is_available():
-    print('CUDA ensabled.')
-    net.cuda()
+#if torch.cuda.is_available():
+#    print('CUDA ensabled.')
+#    net.cuda()
+print("CUDA Available: ",torch.cuda.is_available())
+device = torch.device("cuda:1" if (use_cuda and torch.cuda.is_available()) else "cpu")
+
+net.to(device)
 net.train()
 
 # Adversarial training setup
-#adversary = FGSMAttack(epsilon=0.3)
-adversary = LinfPGDAttack()
+adversary = FGSMAttack(net, epsilon=0.3)
+#adversary = LinfPGDAttack()
 
 # Train the model
 criterion = nn.CrossEntropyLoss()
@@ -76,6 +83,7 @@ for epoch in range(param['num_epochs']):
 
         if (t + 1) % 100 == 0:
             print('t = %d, loss = %.8f' % (t + 1, loss.data[0]))
+        
 
         optimizer.zero_grad()
         loss.backward()
@@ -84,4 +92,4 @@ for epoch in range(param['num_epochs']):
 
 test(net, loader_test)
 
-torch.save(net.state_dict(), 'models/adv_trained_lenet5.pkl')
+torch.save(net.state_dict(), 'models/adv_trained_googlenet.pth')
